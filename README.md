@@ -52,14 +52,14 @@ The call stack confirms the crash originates in `LoadAvailableVirtualTables` (li
 Business Central's `CDS Integration Impl.` codeunit (id 7201), procedure `LoadAvailableVirtualTables`, enumerates all `PageType = API` pages and groups them into a buffer table keyed on publisher/group/version. The comparison is **case-sensitive**. Two API pages with:
 
 ```al
-// Page A
-APIPublisher = 'ForNav';
-APIGroup = 'AppManagement';
+// Page A — wrong casing (PascalCase)
+APIPublisher = 'Cronus';
+APIGroup = 'SalesData';
 APIVersion = 'v1.0';
 
-// Page B  (same app, different file, or a second installed app)
-APIPublisher = 'forNav';
-APIGroup = 'appManagement';
+// Page B — correct casing (camelCase)
+APIPublisher = 'cronus';
+APIGroup = 'salesData';
 APIVersion = 'v1.0';
 ```
 
@@ -68,7 +68,7 @@ produce **two distinct keys** during enumeration, but the downstream `INSERT` in
 ### Why this is hard to spot
 
 - The error only manifests on tenants with an active Dataverse connection; pure BC tenants are unaffected.
-- The two pages can be in entirely different sub-projects / apps (e.g. one in a `Core` module, one in a `Report Pack` module) installed on the same tenant.
+- The two pages can be in entirely different sub-projects / apps installed on the same tenant.
 - The page with the wrong casing may be `ObsoleteState = Pending` and completely unused — it still gets enumerated.
 - No compile-time or AppSource validation catches casing mismatches between API pages across apps.
 
@@ -95,18 +95,24 @@ produce **two distinct keys** during enumeration, but the downstream `INSERT` in
 
 ---
 
-## The Fix (Applied in ForNAV Report Pack)
+## How to Fix
 
-In the ForNAV Customizable Report Pack, the collision was between:
+The collision in this repo is between:
 
-| File | Page ID | APIPublisher | APIGroup |
-|---|---|---|---|
-| `Core/HelperApi.al` (multiple pages) | 6189110–6189469 | `'ForNav'` | `'AppManagement'` |
-| `Report Pack/Source Control/RepositoriesApi.Page.al` | 6188528 | `'forNav'` | `'appManagement'` |
+| File | Page ID | APIPublisher | APIGroup | Casing |
+|---|---|---|---|---|
+| `Repro/ReproApiPageA.al` | 50100 | `'Cronus'` | `'SalesData'` | ❌ PascalCase |
+| `Repro/ReproApiPageB.al` | 50101 | `'cronus'` | `'salesData'` | ✅ camelCase |
 
-The `RepositoriesApi` page was already `ObsoleteState = Pending` (superseded by Source Control V2 in release 8.1.0.14) and had zero callers. The fix was to **delete it** rather than reconcile the casing, since fixing the casing on an obsolete page served no purpose.
+`ReproApiPageA.al` has the wrong casing. AL API property values (`APIPublisher`, `APIGroup`, `APIVersion`) must be **camelCase**. Changing these properties on a published page is a breaking change (AppSourceCop AS0035), so the fix requires two steps:
 
-Fix commit: `f5dbb813` — *"Remove obsolete Repositories API page causing Dataverse virtual table catalog collision"*
+1. **Mark the wrong-cased page as obsolete** — add `ObsoleteState = Pending`, `ObsoleteReason`, and `ObsoleteTag` to `ReproApiPageA.al`. Leave all existing API properties unchanged.
+
+2. **Create a replacement page** with the correct camelCase values and a new page ID. The replacement page in this repo is `Repro/ReproApiPageAv2.al` (page 50102), using `APIPublisher = 'cronus'` and `APIGroup = 'salesData'` to match Page B.
+
+For the full step-by-step agent task, see [`WORKAROUND_TASK.md`](WORKAROUND_TASK.md).
+
+> **If the wrong-cased page is already obsolete and has no callers**, it can be deleted outright rather than going through the obsolete-then-replace cycle — removing it eliminates the collision with no compatibility risk.
 
 ---
 
@@ -121,6 +127,5 @@ A secondary recommendation: AppSource validation (or the AL compiler) should war
 ## Contact / Handover
 
 Discovered by: René Brummel \<rbr@redandbundle.com\>  
-Product: ForNAV Customizable Report Pack  
 Fix date: 2026-06-25  
-BC versions affected: BC 23+ (the `GE_BC_23_0_0_0` preprocessor guard on the offending page confirms it was only compiled on BC 23 and later)
+BC versions affected: BC 23+
