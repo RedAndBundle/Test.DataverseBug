@@ -1,14 +1,11 @@
-page 50100 "Repro API Page A"
+page 50102 "Repro API Page A v2"
 {
     PageType = API;
-    APIPublisher = 'Cronus';
-    APIGroup = 'SalesData';
-    APIVersion = 'v1.0';
-    EntityName = 'reproItemA';
-    EntitySetName = 'reproItemsA';
-    ObsoleteState = Pending;
-    ObsoleteReason = 'Replaced by Repro API Page A v2 with corrected camelCase API publisher and group.';
-    ObsoleteTag = '1.0';
+    APIPublisher = 'cronus';
+    APIGroup = 'salesData';
+    APIVersion = 'v2.0';
+    EntityName = 'reproItemA2';
+    EntitySetName = 'reproItemsA2';
     SourceTable = Customer;
     ODataKeyFields = SystemId;
     Editable = false;
