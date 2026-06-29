@@ -126,6 +126,6 @@ A secondary recommendation: AppSource validation (or the AL compiler) should war
 
 ## Contact / Handover
 
-Discovered by: René Brummel \<rbr@redandbundle.com\>  
+Discovered by: René Brummel \<info@redandbundle.com\>  
 Fix date: 2026-06-25  
 BC versions affected: BC 23+

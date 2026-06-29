@@ -30,7 +30,7 @@ Changing `APIPublisher`, `APIGroup`, or `APIVersion` on a live API page is a **b
 2. **Create a new file** `ReproApiPageAv2.al` with the next available page ID (50102) and corrected camelCase values:
    - `APIPublisher = 'cronus'`   ← camelCase, matches Page B
    - `APIGroup = 'salesData'`    ← camelCase, matches Page B
-   - `APIVersion = 'v1.0'`
+   - `APIVersion = 'v2.0'`
    - `EntityName = 'reproItemA2'`    ← camelCase, distinct from the obsoleted Page A
    - `EntitySetName = 'reproItemsA2'` ← camelCase, distinct from the obsoleted Page A
    - All other properties identical to the current `ReproApiPageA.al`
